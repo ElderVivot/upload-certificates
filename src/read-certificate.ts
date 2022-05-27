@@ -6,6 +6,8 @@ import path from 'path'
 import pem from 'pem'
 import util from 'util'
 
+import { logger } from './logger'
+
 interface ICertificateInfo extends pem.CertificateSubjectReadResult {
     validity: {
         start: number,
@@ -14,9 +16,9 @@ interface ICertificateInfo extends pem.CertificateSubjectReadResult {
 }
 
 if (os.platform() === 'win32') {
-    process.env.OPENSSL_CONF = path.join(__dirname, '..', '..', '..', 'vendor', 'openssl', 'shared', 'openssl.cnf')
+    process.env.OPENSSL_CONF = path.join(__dirname, '..', 'vendor', 'openssl', 'shared', 'openssl.cnf')
     pem.config({
-        pathOpenSSL: path.join(__dirname, '..', '..', '..', 'vendor', 'openssl', os.arch() === 'x64' ? 'x64' : 'ia32', 'openssl.exe')
+        pathOpenSSL: path.join(__dirname, '..', 'vendor', 'openssl', os.arch() === 'x64' ? 'x64' : 'ia32', 'openssl.exe')
     })
 }
 
@@ -47,6 +49,7 @@ export async function ReadCertificate (pathCertificate: string, password: string
 
         return certificateInfo
     } catch (error) {
+        logger.error(error)
         return {
             country: '',
             state: '',
