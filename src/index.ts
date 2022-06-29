@@ -13,7 +13,7 @@ class Applicattion {
 }
 
 export const job = new CronJob(
-    '25 * * * *',
+    '0 */3 * * *',
     async function () {
         try {
             const applicattion = new Applicattion()
