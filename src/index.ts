@@ -29,5 +29,8 @@ job.start()
 
 const app = express()
 
-const port = Number(process.env.SERVER_PORT) || 3337
+// const applicattion = new Applicattion()
+// applicattion.process().then(_ => console.log(_))
+
+const port = Number(process.env.SERVER_PORT) || 3341
 app.listen(port, () => console.log(`Executing Server Schedule in port ${port} !`))

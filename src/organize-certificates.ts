@@ -6,12 +6,20 @@ import { listFiles } from './get-list-files-of-folder'
 import { logger } from './logger'
 import { ReadCertificate } from './read-certificate'
 
+const minimalizeSpaces = (text: string): string => {
+    let newText = text
+    while (newText.indexOf('  ') >= 0) newText = newText.replace('  ', ' ')
+    newText = newText.trim()
+    return newText
+}
+
 const getPasswordOfNameFile = (file: string, passwordDefault: string): string => {
     try {
         const extensionFile = path.extname(file)
-        const fileUpperCase = file.toUpperCase()
+        const fileMinimalizeSpaces = minimalizeSpaces(file)
+        const fileUpperCase = fileMinimalizeSpaces.toUpperCase()
         const positionPassword = fileUpperCase.indexOf(passwordDefault)
-        const textWithPassword = file.substring(positionPassword + passwordDefault.length, file.length).trim()
+        const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
         const textWithPasswordSplit = textWithPassword.split(' ')
         const password = textWithPasswordSplit[0].replace(extensionFile, '')
         return password
@@ -25,12 +33,12 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
     }
 }
 
-const identifiesPasswordDefault = (word: string, file: string): string => {
+const identifiesPasswordDefault = (file: string): string => {
     let password = ''
-    const wordUpperCase = word.toUpperCase()
+    const fileUpperCase = minimalizeSpaces(file.toUpperCase())
     const passwordDefaults = ['SENHA=', 'SENHA-', 'SENHA -', 'SENHA =', 'SENHA']
     for (const passwordDefault of passwordDefaults) {
-        const positionPasswordDefault = wordUpperCase.indexOf(passwordDefault)
+        const positionPasswordDefault = fileUpperCase.indexOf(passwordDefault)
         if (positionPasswordDefault >= 0) {
             password = getPasswordOfNameFile(file, passwordDefault)
             break
@@ -58,27 +66,20 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         const nameFileOriginal = path.basename(file)
         const fileUpperCase = file.toUpperCase()
         if (fileUpperCase.indexOf('SENHA') >= 0) {
-            const fileSplitSpace = file.split(' ')
             let identifiedPasswordPattern = false
-            for (let idx = 0; idx < fileSplitSpace.length; idx++) {
-                const word = fileSplitSpace[idx]
-                const password = identifiesPasswordDefault(word, file)
-                if (password) {
-                    identifiedPasswordPattern = true
-                    const certificateInfo = await ReadCertificate(file, password)
-                    if (certificateInfo.commonName === 'invalid_password') {
-                        await fsExtra.copy(file, path.resolve(directoryToCopy, 'senha_invalida', `${nameFileOriginal}`), { overwrite: true })
-                        break
-                    }
-                    if (new Date() > new Date(certificateInfo.validity.end)) {
-                        await fsExtra.copy(file, path.resolve(directoryToCopy, 'vencido', `${nameFileOriginal}`), { overwrite: true })
-                        break
-                    }
-                    // const commonName = certificateInfo.commonName.trim().normalize('NFD').replace(/([\u0300-\u036f]|[^0-9a-zA-Z ])/g, '').toUpperCase().substring(0, 70)
-                    // const nameFile = `${commonName}-${password}${extensionFile}`
-                    // await fsExtra.copy(file, path.resolve(directoryToCopy, 'ok', nameFile), { overwrite: true })
+            const password = identifiesPasswordDefault(file)
+            if (password) {
+                identifiedPasswordPattern = true
+                const certificateInfo = await ReadCertificate(file, password)
+                if (certificateInfo.commonName === 'invalid_password') {
+                    await fsExtra.copy(file, path.resolve(directoryToCopy, 'senha_invalida', `${nameFileOriginal}`), { overwrite: true })
                     break
                 }
+                if (new Date() > new Date(certificateInfo.validity.end)) {
+                    await fsExtra.copy(file, path.resolve(directoryToCopy, 'vencido', `${nameFileOriginal}`), { overwrite: true })
+                    break
+                }
+                break
             }
             if (!identifiedPasswordPattern) {
                 await fsExtra.copy(file, path.resolve(directoryToCopy, 'padrao_senha_nao_reconhecido', `${nameFileOriginal}`), { overwrite: true })
