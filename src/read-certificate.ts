@@ -49,19 +49,28 @@ export async function ReadCertificate (pathCertificate: string, password: string
 
         return certificateInfo
     } catch (error) {
-        logger.error(error)
-        return {
+        const dataCertificateError = {
             country: '',
             state: '',
             locality: '',
             organization: '',
             organizationUnit: '',
-            commonName: 'invalid_password',
+            commonName: '',
             emailAddress: '',
             validity: {
                 start: 0,
                 end: 0
             }
+        }
+
+        if (axios.isAxiosError(error)) {
+            logger.error(error.response?.data)
+            dataCertificateError.commonName = 'axios_error'
+            return dataCertificateError
+        } else {
+            logger.error(error)
+            dataCertificateError.commonName = 'invalid_password'
+            return dataCertificateError
         }
     }
 }

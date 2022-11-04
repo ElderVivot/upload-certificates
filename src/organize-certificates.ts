@@ -73,9 +73,11 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
                 const certificateInfo = await ReadCertificate(file, password)
                 if (certificateInfo.commonName === 'invalid_password') {
                     await fsExtra.copy(file, path.resolve(directoryToCopy, 'senha_invalida', `${nameFileOriginal}`), { overwrite: true })
+                    continue
                 }
                 if (new Date() > new Date(certificateInfo.validity.end)) {
                     await fsExtra.copy(file, path.resolve(directoryToCopy, 'vencido', `${nameFileOriginal}`), { overwrite: true })
+                    continue
                 }
             }
             if (!identifiedPasswordPattern) {
