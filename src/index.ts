@@ -7,20 +7,22 @@ import { OrganizeCertificates } from './organize-certificates'
 
 class Applicattion {
     async process (): Promise<void> {
-        logger.info('- Organizando certificados')
-        await OrganizeCertificates(process.env.FOLDER_CERTIFICATE_ORIGINAL, process.env.FOLDER_CERTIFICATE_COPY)
+        try {
+            logger.info('- Organizando certificados')
+            await OrganizeCertificates(process.env.FOLDER_CERTIFICATE_ORIGINAL, process.env.FOLDER_CERTIFICATE_COPY)
+        } catch (error) {
+            logger.error(error)
+        }
     }
 }
+
+new Applicattion().process().then(_ => console.log(_))
 
 export const job = new CronJob(
     '0 */3 * * *',
     async function () {
-        try {
-            const applicattion = new Applicattion()
-            await applicattion.process()
-        } catch (error) {
-            logger.error(`- Erro ao processar baixa de notas ${error}`)
-        }
+        const applicattion = new Applicattion()
+        await applicattion.process()
     },
     null,
     true
