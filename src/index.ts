@@ -16,10 +16,10 @@ class Applicattion {
     }
 }
 
-new Applicattion().process().then(_ => console.log(_))
+// new Applicattion().process().then(_ => console.log(_))
 
 export const job = new CronJob(
-    '0 */3 * * *',
+    '05 */8 * * *',
     async function () {
         const applicattion = new Applicattion()
         await applicattion.process()
