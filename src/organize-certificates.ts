@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { promises as fs } from 'fs'
 import fsExtra from 'fs-extra'
 import path from 'path'
@@ -59,6 +60,9 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         })
     }
     fsExtra.mkdirSync(directoryToCopy)
+
+    const { data: listCertificateAlreadyExistSaved } = await axios.get(`${process.env.API_HOST}/certificate/list_certificate_not_overdue`, { headers: { tenant: process.env.TENANT } })
+
     const files = await listFiles(directory)
     for (const file of files) {
         const extensionFile = path.extname(file)
@@ -70,7 +74,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
             const password = identifiesPasswordDefault(file)
             if (password) {
                 identifiedPasswordPattern = true
-                const certificateInfo = await ReadCertificate(file, password)
+                const certificateInfo = await ReadCertificate(file, password, listCertificateAlreadyExistSaved)
                 if (certificateInfo.commonName === 'invalid_password') {
                     await fsExtra.copy(file, path.resolve(directoryToCopy, 'senha_invalida', `${nameFileOriginal}`), { overwrite: true })
                     continue

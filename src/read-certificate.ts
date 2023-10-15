@@ -33,19 +33,29 @@ const readCertificateInfoAsyn = util.promisify(
     )
 )
 
-export async function ReadCertificate (pathCertificate: string, password: string) : Promise<ICertificateInfo> {
+export async function ReadCertificate (pathCertificate: string, password: string, listCertificateAlreadyExistSaved: string[] = []) : Promise<ICertificateInfo> {
     try {
         const certificate = await readPkcs12Async(pathCertificate, { p12Password: password })
         const certificateInfo = await readCertificateInfoAsyn(certificate.cert)
+        const federalRegistration = certificateInfo.commonName.split(':')[1]
 
         const nameFile = path.basename(pathCertificate)
+
+        if (listCertificateAlreadyExistSaved.indexOf(federalRegistration) >= 0) {
+            logger.info(`${federalRegistration} | CERTIFICATE_ALREADY_EXIST | "${pathCertificate}"`)
+            return certificateInfo
+        }
+        if (new Date() > new Date(certificateInfo.validity.end)) {
+            logger.info(`${federalRegistration} | ALREADY_OVERDUE | "${pathCertificate}"`)
+            return certificateInfo
+        }
 
         const formData = new FormData()
         formData.append('password', password)
         formData.append('file', fs.readFileSync(pathCertificate), { filename: nameFile })
 
         const res = await axios.post(`${process.env.API_HOST}/certificate`, formData, { headers: { tenant: process.env.TENANT } })
-        console.log(res.data)
+        logger.info(res.data)
 
         return certificateInfo
     } catch (error) {
