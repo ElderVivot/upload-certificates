@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import axios from 'axios'
 import { promises as fs } from 'fs'
 import fsExtra from 'fs-extra'
@@ -85,10 +86,16 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
                 }
             }
             if (!identifiedPasswordPattern) {
-                await fsExtra.copy(file, path.resolve(directoryToCopy, 'padrao_senha_nao_reconhecido', `${nameFileOriginal}`), { overwrite: true })
+                const certificateInfo = await ReadCertificate(file, process.env.PASS_DEFAULT, listCertificateAlreadyExistSaved)
+                if (certificateInfo.commonName === 'invalid_password') {
+                    await fsExtra.copy(file, path.resolve(directoryToCopy, 'padrao_senha_nao_reconhecido', `${nameFileOriginal}`), { overwrite: true })
+                }
             }
         } else {
-            await fsExtra.copy(file, path.resolve(directoryToCopy, 'sem_senha', `${nameFileOriginal}`), { overwrite: true })
+            const certificateInfo = await ReadCertificate(file, process.env.PASS_DEFAULT, listCertificateAlreadyExistSaved)
+            if (certificateInfo.commonName === 'invalid_password') {
+                await fsExtra.copy(file, path.resolve(directoryToCopy, 'sem_senha', `${nameFileOriginal}`), { overwrite: true })
+            }
         }
     }
 }
