@@ -8,6 +8,8 @@ import { listFiles } from './get-list-files-of-folder'
 import { logger } from './logger'
 import { ReadCertificate } from './read-certificate'
 
+const PASSWORD_DEFAULTS = (process.env.PASSWORD_DEFAULTS || 'SENHA=;SENHA-;SENHA -;SENHA =;SENHA(;SENHA').split(';')
+
 const minimalizeSpaces = (text: string): string => {
     let newText = text
     while (newText.indexOf('  ') >= 0) newText = newText.replace('  ', ' ')
@@ -23,7 +25,10 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
         const positionPassword = fileUpperCase.indexOf(passwordDefault)
         const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
         const textWithPasswordSplit = textWithPassword.split(' ')
-        const password = textWithPasswordSplit[0].replace(extensionFile, '')
+        let password = textWithPasswordSplit[0].replace(extensionFile, '')
+        if (passwordDefault === 'SENHA(') {
+            password = password.substring(0, password.length - 1)
+        }
         return password
     } catch (error) {
         logger.error({
@@ -38,7 +43,7 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
 const identifiesPasswordDefault = (file: string): string => {
     let password = ''
     const fileUpperCase = minimalizeSpaces(file.toUpperCase())
-    const passwordDefaults = ['SENHA=', 'SENHA-', 'SENHA -', 'SENHA =', 'SENHA']
+    const passwordDefaults = PASSWORD_DEFAULTS
     for (const passwordDefault of passwordDefaults) {
         const positionPasswordDefault = fileUpperCase.indexOf(passwordDefault)
         if (positionPasswordDefault >= 0) {
@@ -73,6 +78,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         if (fileUpperCase.indexOf('SENHA') >= 0) {
             let identifiedPasswordPattern = false
             const password = identifiesPasswordDefault(file)
+            console.log(password)
             if (password) {
                 identifiedPasswordPattern = true
                 const certificateInfo = await ReadCertificate(file, password, listCertificateAlreadyExistSaved)
