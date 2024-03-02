@@ -26,8 +26,9 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
         const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
         const textWithPasswordSplit = textWithPassword.split(' ')
         let password = textWithPasswordSplit[0].replace(extensionFile, '')
-        if (passwordDefault === 'SENHA(') {
-            password = password.substring(0, password.length - 1)
+        if (passwordDefault === 'SENHA(' || passwordDefault === '(SENHA') {
+            const positionCloseParentheses = password.indexOf(')')
+            password = password.substring(0, positionCloseParentheses)
         }
         return password
     } catch (error) {
@@ -68,6 +69,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
     fsExtra.mkdirSync(directoryToCopy)
 
     const { data: listCertificateAlreadyExistSaved } = await axios.get(`${process.env.API_HOST}/certificate/list_certificate_not_overdue`, { headers: { tenant: process.env.TENANT } })
+    // const listCertificateAlreadyExistSaved = []
 
     const files = await listFiles(directory)
     for (const file of files) {
@@ -78,7 +80,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         if (fileUpperCase.indexOf('SENHA') >= 0) {
             let identifiedPasswordPattern = false
             const password = identifiesPasswordDefault(file)
-            console.log(password)
+            // console.log('-------', password)
             if (password) {
                 identifiedPasswordPattern = true
                 const certificateInfo = await ReadCertificate(file, password, listCertificateAlreadyExistSaved)
