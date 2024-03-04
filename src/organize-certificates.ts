@@ -8,7 +8,8 @@ import { listFiles } from './get-list-files-of-folder'
 import { logger } from './logger'
 import { ReadCertificate } from './read-certificate'
 
-const PASSWORD_DEFAULTS = (process.env.PASSWORD_DEFAULTS || 'SENHA=;SENHA-;SENHA -;SENHA =;SENHA(;SENHA').split(';')
+const PASSWORD_DEFAULTS = (process.env.OPTIONS_PASSWORDS || 'SENHA=|SENHA-|SENHA -|SENHA =|SENHA(|(SENHA|SENHA').split('|')
+console.log(PASSWORD_DEFAULTS, process.env.OPTIONS_PASSWORDS)
 
 const minimalizeSpaces = (text: string): string => {
     let newText = text
@@ -36,6 +37,7 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
             password = password.substring(positionOpenParentheses + 1, positionCloseParentheses)
             password = minimalizeSpaces(password)
         }
+        // console.log(password)
         return password
     } catch (error) {
         logger.error({
@@ -83,7 +85,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         if (extensionFile !== '.pfx' && extensionFile !== '.p12') continue
         const nameFileOriginal = path.basename(file)
         const fileUpperCase = file.toUpperCase()
-        if (fileUpperCase.indexOf('SENHA') >= 0) {
+        if (fileUpperCase.indexOf('SENHA') >= 0 || (fileUpperCase.indexOf('(') >= 0 && fileUpperCase.indexOf(')') >= 0 && PASSWORD_DEFAULTS.indexOf('()') >= 0)) {
             let identifiedPasswordPattern = false
             const password = identifiesPasswordDefault(file)
             // console.log('-------', password)
