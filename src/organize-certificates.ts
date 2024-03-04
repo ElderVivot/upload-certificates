@@ -26,9 +26,15 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
         const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
         const textWithPasswordSplit = textWithPassword.split(' ')
         let password = textWithPasswordSplit[0].replace(extensionFile, '')
-        if (passwordDefault === 'SENHA(' || passwordDefault === '(SENHA') {
+        if (passwordDefault.indexOf('SENHA') >= 0 && passwordDefault.indexOf('(') >= 0) {
             const positionCloseParentheses = password.indexOf(')')
             password = password.substring(0, positionCloseParentheses)
+        }
+        if (passwordDefault.indexOf('SENHA') < 0 && passwordDefault.indexOf('(') >= 0 && passwordDefault.indexOf(')') >= 0) {
+            const positionOpenParentheses = password.indexOf('(')
+            const positionCloseParentheses = password.indexOf(')')
+            password = password.substring(positionOpenParentheses, positionCloseParentheses)
+            password = minimalizeSpaces(password)
         }
         return password
     } catch (error) {
