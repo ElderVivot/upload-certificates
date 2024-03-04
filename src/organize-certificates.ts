@@ -33,7 +33,7 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
         if (passwordDefault.indexOf('SENHA') < 0 && passwordDefault.indexOf('(') >= 0 && passwordDefault.indexOf(')') >= 0) {
             const positionOpenParentheses = password.indexOf('(')
             const positionCloseParentheses = password.indexOf(')')
-            password = password.substring(positionOpenParentheses, positionCloseParentheses)
+            password = password.substring(positionOpenParentheses + 1, positionCloseParentheses)
             password = minimalizeSpaces(password)
         }
         return password
