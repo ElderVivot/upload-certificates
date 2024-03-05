@@ -34,9 +34,9 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
                 password = password.substring(0, positionCloseParentheses)
             }
         } else {
-            const positionOpenParentheses = fileUpperCase.indexOf('(')
-            const positionCloseParentheses = fileUpperCase.indexOf(')')
-            password = fileUpperCase.substring(positionOpenParentheses + 1, positionCloseParentheses)
+            const positionOpenParentheses = fileMinimalizeSpaces.indexOf('(')
+            const positionCloseParentheses = fileMinimalizeSpaces.indexOf(')')
+            password = fileMinimalizeSpaces.substring(positionOpenParentheses + 1, positionCloseParentheses)
             password = minimalizeSpaces(password)
         }
         return password
@@ -97,6 +97,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         if (fileUpperCase.indexOf('SENHA') >= 0 || (fileUpperCase.indexOf('(') >= 0 && fileUpperCase.indexOf(')') >= 0 && PASSWORD_DEFAULTS.indexOf('()') >= 0)) {
             let identifiedPasswordPattern = false
             const password = identifiesPasswordDefault(file)
+            console.log(password)
             if (password) {
                 identifiedPasswordPattern = true
                 const certificateInfo = await ReadCertificate(file, password, listCertificateAlreadyExistSaved)
