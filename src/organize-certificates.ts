@@ -9,7 +9,7 @@ import { logger } from './logger'
 import { ReadCertificate } from './read-certificate'
 
 const PASSWORD_DEFAULTS = (process.env.OPTIONS_PASSWORDS || 'SENHA=|SENHA-|SENHA -|SENHA =|SENHA(|(SENHA|SENHA').split('|')
-console.log(PASSWORD_DEFAULTS, process.env.OPTIONS_PASSWORDS)
+console.log(PASSWORD_DEFAULTS, process.env.OPTIONS_PASSWORDS, PASSWORD_DEFAULTS.indexOf('()'))
 
 const minimalizeSpaces = (text: string): string => {
     let newText = text
@@ -23,21 +23,22 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
         const extensionFile = path.extname(file)
         const fileMinimalizeSpaces = minimalizeSpaces(file)
         const fileUpperCase = fileMinimalizeSpaces.toUpperCase()
-        const positionPassword = fileUpperCase.indexOf(passwordDefault)
-        const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
-        const textWithPasswordSplit = textWithPassword.split(' ')
-        let password = textWithPasswordSplit[0].replace(extensionFile, '')
-        if (passwordDefault.indexOf('SENHA') >= 0 && passwordDefault.indexOf('(') >= 0) {
-            const positionCloseParentheses = password.indexOf(')')
-            password = password.substring(0, positionCloseParentheses)
-        }
-        if (passwordDefault.indexOf('SENHA') < 0 && passwordDefault.indexOf('(') >= 0 && passwordDefault.indexOf(')') >= 0) {
-            const positionOpenParentheses = password.indexOf('(')
-            const positionCloseParentheses = password.indexOf(')')
-            password = password.substring(positionOpenParentheses + 1, positionCloseParentheses)
+        let password = ''
+        if (passwordDefault !== '()') {
+            const positionPassword = fileUpperCase.indexOf(passwordDefault)
+            const textWithPassword = fileMinimalizeSpaces.substring(positionPassword + passwordDefault.length, file.length).trim()
+            const textWithPasswordSplit = textWithPassword.split(' ')
+            password = textWithPasswordSplit[0].replace(extensionFile, '')
+            if (passwordDefault.indexOf('SENHA') >= 0 && passwordDefault.indexOf('(') >= 0) {
+                const positionCloseParentheses = password.indexOf(')')
+                password = password.substring(0, positionCloseParentheses)
+            }
+        } else {
+            const positionOpenParentheses = fileUpperCase.indexOf('(')
+            const positionCloseParentheses = fileUpperCase.indexOf(')')
+            password = fileUpperCase.substring(positionOpenParentheses + 1, positionCloseParentheses)
             password = minimalizeSpaces(password)
         }
-        // console.log(password)
         return password
     } catch (error) {
         logger.error({
@@ -51,14 +52,22 @@ const getPasswordOfNameFile = (file: string, passwordDefault: string): string =>
 
 const identifiesPasswordDefault = (file: string): string => {
     let password = ''
-    const fileUpperCase = minimalizeSpaces(file.toUpperCase())
-    const passwordDefaults = PASSWORD_DEFAULTS
-    for (const passwordDefault of passwordDefaults) {
-        const positionPasswordDefault = fileUpperCase.indexOf(passwordDefault)
-        if (positionPasswordDefault >= 0) {
-            password = getPasswordOfNameFile(file, passwordDefault)
-            break
+    try {
+        const fileUpperCase = minimalizeSpaces(file.toUpperCase())
+        const passwordDefaults = PASSWORD_DEFAULTS
+        for (const passwordDefault of passwordDefaults) {
+            const positionPasswordDefault = fileUpperCase.indexOf(passwordDefault)
+            if (positionPasswordDefault >= 0) {
+                password = getPasswordOfNameFile(file, passwordDefault)
+                break
+            }
+            if (passwordDefault === '()') {
+                password = getPasswordOfNameFile(file, passwordDefault)
+                if (password) break
+            }
         }
+    } catch (error) {
+        console.log(error)
     }
     return password
 }
@@ -88,7 +97,6 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
         if (fileUpperCase.indexOf('SENHA') >= 0 || (fileUpperCase.indexOf('(') >= 0 && fileUpperCase.indexOf(')') >= 0 && PASSWORD_DEFAULTS.indexOf('()') >= 0)) {
             let identifiedPasswordPattern = false
             const password = identifiesPasswordDefault(file)
-            // console.log('-------', password)
             if (password) {
                 identifiedPasswordPattern = true
                 const certificateInfo = await ReadCertificate(file, password, listCertificateAlreadyExistSaved)
