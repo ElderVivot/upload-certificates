@@ -85,6 +85,7 @@ export async function OrganizeCertificates (directory: string, directoryToCopy: 
     }
     fsExtra.mkdirSync(directoryToCopy)
 
+    console.log(process.env.API_HOST)
     const { data: listCertificateAlreadyExistSaved } = await axios.get(`${process.env.API_HOST}/certificate/list_certificate_not_overdue`, { headers: { tenant: process.env.TENANT } })
     // const listCertificateAlreadyExistSaved = []
 
