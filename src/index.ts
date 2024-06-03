@@ -16,8 +16,7 @@ class Applicattion {
     }
 }
 
-//
-new Applicattion().process().then(_ => console.log(_))
+// new Applicattion().process().then(_ => console.log(_))
 
 export const job = new CronJob(
     '05 */8 * * *',
